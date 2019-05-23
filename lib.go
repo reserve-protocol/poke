@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/reserve-protocol/trezor-pin"
+	"github.com/reserve-protocol/trezor"
 )
 
 var defaultKeys = []string{
@@ -113,10 +113,7 @@ func openHardwareWallet() (accounts.Wallet, accounts.Account) {
 		// On a Trezor, this may require PIN entry.
 		err = wallet.Open("")
 		if err == usbwallet.ErrTrezorPINNeeded {
-			ok, pin, pinErr := trezor.DoPin("enter PIN")
-			if !ok {
-				fatal("user cancelled pin entry")
-			}
+			pin, pinErr := trezor.GetPIN("enter PIN")
 			check(pinErr, "getting PIN input")
 			err = wallet.Open(pin)
 		}
