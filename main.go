@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jeremyschlatter/xdg"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 )
@@ -124,13 +125,13 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 `
 
 func mainErr() error {
-	if len(os.Args) < 3 {
-		fatal("usage: poke <.sol file> <contract name> [arg...]")
+	contractName := pflag.StringP("contract", "c", "", "Name of the contract to wrap. Optional if it matches the name of the .sol file.")
+	pflag.Parse()
+	if len(pflag.Args()) == 0 {
+		fatal("usage: poke <.sol file> [-c contract-name] [arg...]")
 	}
-	solFile := os.Args[1]
-	contractName := os.Args[2]
-	args := os.Args[3:]
-	_ = args
+	solFile := pflag.Arg(0)
+	args := pflag.Args()[1:]
 
 	workDir, err := ioutil.TempDir("", "poke-work-dir")
 	if err != nil {
@@ -152,7 +153,7 @@ func mainErr() error {
 		}
 		hash.Write(b)
 		buildHash := hash.Sum(nil)
-		fname := fmt.Sprintf("%v-%v.gob", solFile, contractName)
+		fname := fmt.Sprintf("%v-%v.gob", solFile, *contractName)
 		cache, err := cfg.CacheFile(fname)
 		if err == nil {
 			// check if hash matches cache
@@ -178,7 +179,7 @@ func mainErr() error {
 			}
 		}
 		// else do work and save cache
-		obj, err := abigen(solFile, contractName, workDir)
+		obj, err := abigen(solFile, *contractName, workDir)
 		if err != nil {
 			return nil, xerrors.Errorf("generating Go bindings to solidity ABI: %w", err)
 		}
@@ -412,15 +413,36 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 	// choose which contract we care about
 	var compilerOutput CompilerOutput
 	{
+		matchName := contractName
+		if contractName == "" {
+			matchName = strings.TrimSuffix(solFile, ".sol")
+		}
 		var compilerOutputs []CompilerOutput
 		for fileColonContractName := range parsed.Contracts {
 			nameParts := strings.Split(fileColonContractName, ":")
-			if nameParts[0] == solFile && nameParts[1] == contractName {
+			if nameParts[0] == solFile && nameParts[1] == matchName {
 				compilerOutputs = append(compilerOutputs, parsed.Contracts[fileColonContractName])
 			}
 		}
-		if len(compilerOutputs) != 1 {
-			panic("unhandled")
+		if len(compilerOutputs) == 0 {
+			if contractName == "" {
+				fatalf(
+					"No contract named %q in %v.\n" +
+					"By default I expect to find a contract with the same name as the .sol file.\n" +
+					"You can set a non-default contract name manually with the -c flag.",
+					matchName, solFile,
+				)
+			}
+			fatalf(
+				"I did not find a contract named %q in %v",
+				contractName, solFile,
+			)
+		}
+		if len(compilerOutputs) > 1 {
+			fatalf(
+				"I'm sorry, I got unexpected output from solc that I do not know how to handle. The solc output contained %v results for the %v contract in %v, and I do not know which one to choose.",
+				len(compilerOutputs), matchName, solFile,
+			)
 		}
 		compilerOutput = compilerOutputs[0]
 	}

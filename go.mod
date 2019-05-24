@@ -18,6 +18,7 @@ require (
 	github.com/rs/cors v1.6.0 // indirect
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
 	github.com/spf13/cobra v0.0.4
+	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	golang.org/x/net v0.0.0-20190522155817-f3200d17e092 // indirect
