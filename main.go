@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -125,10 +126,57 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 `
 
 func mainErr() error {
+	if len(os.Args) == 2 && (os.Args[1] == "-legal" || os.Args[1] == "--legal") {
+		var (
+			orderedLicenses []license
+			seenLicenses    = make(map[string]bool)
+		)
+		for _, info := range dependencyLicenses {
+			if !seenLicenses[info.License[0]] {
+				seenLicenses[info.License[0]] = true
+				orderedLicenses = append(orderedLicenses, info.License)
+			}
+		}
+		return template.Must(template.New("").Funcs(
+			map[string]interface{}{
+				"tab": func(s string) string {
+					return strings.ReplaceAll(s, "\n", "\n\t")
+				},
+			},
+		).Parse(`
+Poke incorporates a number of open-source libraries, licensed under the following terms:
+
+{{range .Deps}}
+	{{.Lib}}
+	{{- with .Copyright}}
+	{{tab .}}
+	{{- end}}
+	{{index .License 0}}
+{{end}}
+
+The text of these licenses is as follows:
+
+{{range .Licenses}}
+
+             ---------------------------------------------
+
+{{index . 1}}
+{{end}}
+		`)).Execute(
+			os.Stdout,
+			map[string]interface{}{
+				"Deps":     dependencyLicenses,
+				"Licenses": orderedLicenses,
+			},
+		)
+	}
+
 	contractName := pflag.StringP("contract", "c", "", "Name of the contract to wrap. Optional if it matches the name of the .sol file.")
 	pflag.Parse()
 	if len(pflag.Args()) == 0 {
-		fatal("usage: poke <.sol file> [-c contract-name] [arg...]")
+		fatal(`usage: poke <.sol file> [-c contract-name] [arg...]
+
+To see the licenses of libraries included in poke, run 'poke -legal'`)
 	}
 	solFile := pflag.Arg(0)
 	args := pflag.Args()[1:]
@@ -427,9 +475,9 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 		if len(compilerOutputs) == 0 {
 			if contractName == "" {
 				fatalf(
-					"No contract named %q in %v.\n" +
-					"By default I expect to find a contract with the same name as the .sol file.\n" +
-					"You can set a non-default contract name manually with the -c flag.",
+					"No contract named %q in %v.\n"+
+						"By default I expect to find a contract with the same name as the .sol file.\n"+
+						"You can set a non-default contract name manually with the -c flag.",
 					matchName, solFile,
 				)
 			}
