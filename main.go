@@ -171,7 +171,41 @@ The text of these licenses is as follows:
 		)
 	}
 
-	contractName := pflag.StringP("contract", "c", "", "Name of the contract to wrap. Optional if it matches the name of the .sol file.")
+	contractName := pflag.StringP(
+		"contract",
+		"c",
+		"",
+		"Name of the contract to wrap. Optional if it matches the name of the .sol file.",
+	)
+	pflag.StringP(
+		"from",
+		"F",
+		defaultKeys[0],
+		"Hex-encoded private key to sign transactions with. Defaults to the 0th address in the 0x mnemonic.",
+	)
+	pflag.String(
+		"address",
+		"",
+		fmt.Sprintf("Address of a deployed copy of the contract."),
+	)
+	pflag.StringP(
+		"node",
+		"n",
+		"http://localhost:8545",
+		"URL of an Ethereum node",
+	)
+	pflag.IntP(
+		"gasprice",
+		"g",
+		0,
+		"Gas price to use, in gwei. Defaults to using go-ethereum default estimation algorithm.",
+	)
+	pflag.String(
+		"derivation-path",
+		"m/44'/60'/0'/0/0",
+		"BIP 32 derivation path to use with hardware wallet. Only used if --from=hardware",
+	)
+
 	pflag.Parse()
 	if len(pflag.Args()) == 0 {
 		fatal(`usage: poke <.sol file> [-c contract-name] [arg...]
@@ -188,7 +222,6 @@ To see the licenses of libraries included in poke, run 'poke -legal'`)
 	defer os.RemoveAll(workDir)
 
 	// TODO: support sol-compiler
-
 	cfg := xdg.Paths{
 		XDGSuffix: "poke",
 	}
@@ -259,7 +292,6 @@ To see the licenses of libraries included in poke, run 'poke -legal'`)
 	userDoc := obj.UserDoc
 	name := obj.Name
 	bytecode := obj.Bytecode
-
 	root := cobra.Command{
 		Use:   "internal",
 		Short: fmt.Sprintf("A command-line interface to interact with the %s smart contract", name),
@@ -376,34 +408,7 @@ To see the licenses of libraries included in poke, run 'poke -legal'`)
 	root.SetArgs(args)
 	viper.SetEnvPrefix("poke")
 	viper.AutomaticEnv()
-	root.PersistentFlags().StringP(
-		"from",
-		"F",
-		defaultKeys[0],
-		"Hex-encoded private key to sign transactions with. Defaults to the 0th address in the 0x mnemonic.",
-	)
-	root.PersistentFlags().String(
-		"address",
-		"",
-		fmt.Sprintf("Address of a deployed copy of the %v contract.", name),
-	)
-	root.PersistentFlags().StringP(
-		"node",
-		"n",
-		"http://localhost:8545",
-		"URL of an Ethereum node",
-	)
-	root.PersistentFlags().IntP(
-		"gasprice",
-		"g",
-		0,
-		"Gas price to use, in gwei. Defaults to using go-ethereum default estimation algorithm.",
-	)
-	root.PersistentFlags().String(
-		"derivation-path",
-		"m/44'/60'/0'/0/0",
-		"BIP 32 derivation path to use with hardware wallet. Only used if --from=hardware",
-	)
+	pflag.VisitAll(func(f *pflag.Flag) { root.PersistentFlags().AddFlag(f) })
 	viper.BindPFlags(root.PersistentFlags())
 	defer runExitFuncs()
 
