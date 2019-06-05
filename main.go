@@ -463,7 +463,8 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 	{
 		matchName := contractName
 		if contractName == "" {
-			matchName = strings.TrimSuffix(solFile, ".sol")
+			parts := strings.Split(solFile, "/")
+			matchName = strings.TrimSuffix(parts[len(parts)-1], ".sol")
 		}
 		var compilerOutputs []CompilerOutput
 		for fileColonContractName := range parsed.Contracts {
