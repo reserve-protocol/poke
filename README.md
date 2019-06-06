@@ -12,3 +12,5 @@ If you prefer, you can also install poke from source. You'll need [Go 1.12+](htt
     git clone https://github.com/reserve-protocol/poke.git
     cd poke
     go install
+
+Also, you'll need `solc` installed if you don't have it already, which you can get from `npm`. 
