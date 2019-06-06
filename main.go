@@ -351,8 +351,6 @@ To see the licenses of libraries included in poke, run 'poke -legal'`)
 					)
 					check(err, "calling "+name)
 					fmt.Println(solTypes[outType].toString(out))
-					//log(name + "()", tx, err)
-					// TODO: events
 				} else {
 					tx, err := getDeployment(theABI).Transact(
 						getTxnOpts(),
@@ -435,7 +433,7 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 	cmd := exec.Command(
 		"solc",
 		"--optimize",
-		"--optimize-runs", "1000000", // use when deploying only
+		"--optimize-runs", "1000000", // performance tradeoff here
 		"--combined-json", "abi,bin,userdoc,devdoc",
 		solFile,
 	)

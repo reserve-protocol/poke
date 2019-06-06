@@ -213,10 +213,8 @@ func getDeployment(abi abi.ABI) *bind.BoundContract {
 	if deployment == nil {
 		address := viper.GetString("address")
 		if address == "" {
-			fmt.Fprintln(os.Stderr, "No address specified for the Reserve Dollar contract.")
+			fmt.Fprintln(os.Stderr, "No address specified for the contract.")
 			fmt.Fprintln(os.Stderr, "To specify an address, set the --address flag or the POKE_ADDRESS environment variable.")
-			fmt.Fprintln(os.Stderr, "To deploy a new contract and set the POKE_ADDRESS in your current shell in a single step, run:")
-			fmt.Fprintln(os.Stderr, "\t$(poke deploy)")
 			exit(1)
 		}
 		deployment = bind.NewBoundContract(hexToAddress(address), abi, getNode(), getNode(), getNode())
@@ -408,6 +406,7 @@ func deployCmd(name string, abi abi.ABI, bytecode []byte) *cobra.Command {
 				getNode(),
 				inputs...,
 			)
+			viper.Set("address", address.Hex())
 			log("deployment", tx, abi, err)
 			fmt.Println("export POKE_ADDRESS=" + address.Hex())
 		},
