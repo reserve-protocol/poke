@@ -293,8 +293,8 @@ To see the licenses of libraries included in poke, run 'poke -legal'`)
 	name := obj.Name
 	bytecode := obj.Bytecode
 	root := cobra.Command{
-		Use:   "internal",
-		Short: fmt.Sprintf("A command-line interface to interact with the %s smart contract", name),
+		Use:   "poke",
+		Short: fmt.Sprintf("A command-line interface to interact with arbitrary smart contracts"),
 	}
 	var calls, transactions []*cobra.Command
 	for name, method := range theABI.Methods {
