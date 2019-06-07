@@ -181,7 +181,7 @@ The text of these licenses is as follows:
 		"from",
 		"F",
 		defaultKeys[0],
-		"Hex-encoded private key to sign transactions with. Defaults to the 0th address in the 0x mnemonic.",
+		"Hex-encoded private key to sign transactions with. Defaults to the 0th address in the 0x mnemonic. Use `hardware` to use Trezor/Ledger. ",
 	)
 	pflag.String(
 		"address",
