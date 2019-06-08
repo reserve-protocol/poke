@@ -13,7 +13,7 @@ If you prefer, you can also install poke from source. You'll need [Go 1.12+](htt
     cd poke
     go install
 
-Also, you'll need `solc` installed if you don't have it already, which you can get from `npm`. 
+Also, you'll need [`solc-select`](https://github.com/crytic/solc-select).
 
 # Examples
 
