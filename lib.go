@@ -435,6 +435,19 @@ var showGasCmd = &cobra.Command{
 	},
 }
 
+var showEthCmd = &cobra.Command{
+	Use:   "show-eth <address>",
+	Short: "Show ETH balance.",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		address := parseAddress(args[0])
+		wei, err := getNode().BalanceAt(ctx, address, nil)
+		check(err, "retrieving wei balance")
+		fmt.Printf("%v atto-ETH\n", wei)
+	},
+}
+
 var sendEthCmd = &cobra.Command{
 	Use:   "send-eth <address> <value>",
 	Short: "Send ETH to an address.",
