@@ -1,7 +1,7 @@
 poke
 ---
 
-Poke is a CLI tool for interacting with smart contracts.
+Poke is a CLI tool for interacting with smart contracts. See https://medium.com/reserve-currency/poke-a-cli-tool-for-ethereum-development-b4bb66f4e438 for an overview. 
 
 # Installation
 
