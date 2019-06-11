@@ -126,7 +126,7 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 `
 
 func mainErr() error {
-	if len(os.Args) == 2 && (os.Args[1] == "-legal" || os.Args[1] == "--legal") {
+	if len(os.Args) == 2 && (os.Args[1] == "-license" || os.Args[1] == "--license") {
 		var (
 			orderedLicenses []license
 			seenLicenses    = make(map[string]bool)
@@ -210,7 +210,7 @@ The text of these licenses is as follows:
 	if len(pflag.Args()) == 0 {
 		fatal(`usage: poke <.sol file> [-c contract-name] [arg...]
 
-To see the licenses of libraries included in poke, run 'poke -legal'`)
+To see the licenses of libraries included in poke, run 'poke -license'`)
 	}
 	solFile := pflag.Arg(0)
 	args := pflag.Args()[1:]
