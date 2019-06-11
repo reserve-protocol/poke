@@ -225,7 +225,7 @@ To see the licenses of libraries included in poke, run 'poke -license'`)
 	cfg := xdg.Paths{
 		XDGSuffix: "poke",
 	}
-	obj, err := func() (*cacheObject, error) {
+	build, err := func() (*cacheObject, error) {
 		// hash the input
 		hash := sha256.New()
 		b, err := ioutil.ReadFile(solFile)
@@ -250,27 +250,27 @@ To see the licenses of libraries included in poke, run 'poke -license'`)
 				return nil, xerrors.Errorf("reading cached build output: %w", err)
 			}
 			// if so, use cache
-			var obj cacheObject
-			err = gob.NewDecoder(bytes.NewBuffer(b)).Decode(&obj)
+			var build cacheObject
+			err = gob.NewDecoder(bytes.NewBuffer(b)).Decode(&build)
 			if err != nil {
 				return nil, xerrors.Errorf("decoding cached build output: %w", err)
 			}
-			if bytes.Equal(buildHash, obj.Hash) {
-				return &obj, nil
+			if bytes.Equal(buildHash, build.Hash) {
+				return &build, nil
 			}
 		}
 		// else do work and save cache
-		obj, err := abigen(solFile, *contractName, workDir)
+		build, err := abigen(solFile, *contractName, workDir)
 		if err != nil {
 			return nil, xerrors.Errorf("generating Go bindings to solidity ABI: %w", err)
 		}
-		obj.Hash = buildHash
+		build.Hash = buildHash
 		fname, err = cfg.EnsureCacheFile(fname)
 		if err != nil {
 			return nil, xerrors.Errorf("creating cache file: %w", err)
 		}
 		buf := new(bytes.Buffer)
-		err = gob.NewEncoder(buf).Encode(obj)
+		err = gob.NewEncoder(buf).Encode(build)
 		if err != nil {
 			return nil, xerrors.Errorf("serializing build output to cache: %w", err)
 		}
@@ -278,20 +278,20 @@ To see the licenses of libraries included in poke, run 'poke -license'`)
 		if err != nil {
 			return nil, xerrors.Errorf("writing build output to cache: %w", err)
 		}
-		return obj, nil
+		return build, nil
 	}()
 	if err != nil {
 		return err
 	}
 
-	theABI, err := abi.JSON(strings.NewReader(obj.ABI))
+	theABI, err := abi.JSON(strings.NewReader(build.ABI))
 	if err != nil {
 		return xerrors.Errorf("parsing ABI: %w", err)
 	}
-	devDoc := obj.DevDoc
-	userDoc := obj.UserDoc
-	name := obj.Name
-	bytecode := obj.Bytecode
+	devDoc := build.DevDoc
+	userDoc := build.UserDoc
+	name := build.Name
+	bytecode := build.Bytecode
 	root := cobra.Command{
 		Use:   "poke",
 		Short: fmt.Sprintf("A command-line interface to interact with arbitrary smart contracts"),
