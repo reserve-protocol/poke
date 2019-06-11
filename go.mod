@@ -7,7 +7,7 @@ require (
 	github.com/aristanetworks/goarista v0.0.0-20190522184417-004c259faaeb // indirect
 	github.com/btcsuite/btcd v0.0.0-20190523000118-16327141da8c // indirect
 	github.com/deckarep/golang-set v1.7.1 // indirect
-	github.com/ethereum/go-ethereum v1.8.22-0.20190401134259-cd79bc61a983
+	github.com/ethereum/go-ethereum v1.8.22-0.20190527102806-a184ab7a6188
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/jeremyschlatter/xdg v0.0.0-20190514013549-37532083cacf
@@ -20,6 +20,8 @@ require (
 	github.com/spf13/cobra v0.0.4
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.2
+	github.com/steakknife/bloomfilter v0.0.0-20180922174646-6819c0d2a570 // indirect
+	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	golang.org/x/net v0.0.0-20190522155817-f3200d17e092 // indirect
 	golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522
