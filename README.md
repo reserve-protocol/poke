@@ -7,7 +7,7 @@ Poke is a CLI tool for interacting with smart contracts. See https://medium.com/
 
 The easiest way to get started is to [download the latest binary release](https://dl.equinox.io/reserve-protocol/poke/stable). (Only a mac version is hosted at this time unfortunately, so if you're working on linux you'll need to install poke from source). 
 
-You can also install poke from source. You'll need [Go 1.12+](https://golang.org/dl/), with modules enabled (eg `GO111MODULE=on`). Just clone this repo locally and run `go install` in the repo root:
+To install poke from source, you'll need [Go 1.12+](https://golang.org/dl/), with modules enabled (eg `GO111MODULE=on`). Just clone this repo locally and run `go install` in the repo root:
 
     git clone https://github.com/reserve-protocol/poke.git
     cd poke
