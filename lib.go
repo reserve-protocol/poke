@@ -96,7 +96,7 @@ func openHardwareWallet() (accounts.Wallet, accounts.Account) {
 		check(err, "calling usbwallet.NewTrezorHub()")
 
 		// Collect them into a single list.
-		wallets := accounts.NewManager(ledgerHub, trezorHub).Wallets()
+		wallets := accounts.NewManager(nil, ledgerHub, trezorHub).Wallets()
 
 		// Don't proceed unless there is exactly one hardware wallet available.
 		if len(wallets) == 0 {
