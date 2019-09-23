@@ -242,6 +242,7 @@ To see the licenses of libraries included in poke, run 'poke -license'`)
 		buildHash := hash.Sum(nil)
 		fname := fmt.Sprintf("%v-%v.gob", solFile, *contractName)
 		cache, err := cfg.CacheFile(fname)
+
 		if false && err == nil {
 			// check if hash matches cache
 			// TODO: More robust cache invalidation.
