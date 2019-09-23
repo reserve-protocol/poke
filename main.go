@@ -236,7 +236,8 @@ To see the licenses of libraries included in poke, run 'poke -license'`)
 		buildHash := hash.Sum(nil)
 		fname := fmt.Sprintf("%v-%v.gob", solFile, *contractName)
 		cache, err := cfg.CacheFile(fname)
-		if err == nil {
+
+		if false && err == nil {
 			// check if hash matches cache
 			// TODO: More robust cache invalidation.
 			//       In particular, notice when dependencies have changed
@@ -435,6 +436,7 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 		"solc",
 		"--optimize",
 		"--optimize-runs", "1000000", // performance tradeoff here
+		// "--optimize-runs", "1", // performance tradeoff here
 		"--combined-json", "abi,bin,userdoc,devdoc",
 		solFile,
 	)
