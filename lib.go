@@ -173,6 +173,16 @@ func getGasPrice() *big.Int {
 	return price
 }
 
+func getOptimizeRuns() string {
+	optimizeRunsFlag := viper.GetString("optimize-runs")
+
+	if optimizeRunsFlag == "" {
+		optimizeRunsFlag = "1"
+	}
+
+	return optimizeRunsFlag
+}
+
 func getTxnOpts() *bind.TransactOpts {
 	from := viper.GetString("from")
 	var txnOpts *bind.TransactOpts

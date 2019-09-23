@@ -205,6 +205,12 @@ The text of these licenses is as follows:
 		"m/44'/60'/0'/0/0",
 		"BIP 32 derivation path to use with hardware wallet. Only used if --from=hardware",
 	)
+	pflag.StringP(
+		"optimize-runs",
+		"r",
+		"1",
+		"Runs to optimize solc compilation for. ",
+	)
 
 	pflag.Parse()
 	if len(pflag.Args()) == 0 {
@@ -435,8 +441,7 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 	cmd := exec.Command(
 		"solc",
 		"--optimize",
-		"--optimize-runs", "1000000", // performance tradeoff here
-		// "--optimize-runs", "1", // performance tradeoff here
+		"--optimize-runs", getOptimizeRuns(), // performance tradeoff here
 		"--combined-json", "abi,bin,userdoc,devdoc",
 		solFile,
 	)
