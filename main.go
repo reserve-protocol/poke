@@ -402,7 +402,7 @@ type UserDoc struct {
 	Methods map[string]notice
 }
 
-// readCombinedJson reads compiled bytecode from an already-existing jsonFile.
+// openCombinedJson reads compiled bytecode from an already-existing jsonFile.
 func openCombinedJson(jsonFile, contractName string) ([]byte, error) {
 	compiled, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
@@ -428,13 +428,13 @@ func abigen(solFile, contractName string) ([]byte, error) {
 	return compiled, nil
 }
 
-// Return the filename with its filename extension trimmed away.
+// trimExtension returns the filename with its filename extension trimmed away.
 func trimExtension(filename string) string {
 	return strings.TrimSuffix(filename, path.Ext(filename))
 }
 
-// parseJsonBytecode takes compiled bytes, as the bytestream output by `solc --combined-json abi,bin,userdoc,devdoc`
-// and formats it as a cacheObject.
+// parseJsonBytecode takes compiled bytes, as the bytestream output by
+// `solc --combined-json abi,bin,userdoc,devdoc` and formats it as a cacheObject.
 // contractName: the name of the contract to grab the cached object from
 func parseJsonBytecode(compiled []byte, contractName string, inputFile string, defaultContractName bool) (*cacheObject, error) {
 	type CompilerOutput struct {
@@ -467,16 +467,20 @@ func parseJsonBytecode(compiled []byte, contractName string, inputFile string, d
 			errStr := fmt.Sprintf("I found no contract named %q\n", contractName)
 			if defaultContractName {
 				errStr = errStr +
-					"By default, I assume that the target contract name has the same name as the .sol or .json file.\n" +
-					"You can set a non-default contract name manually with the -c flag.\n"
+					"By default, I assume that the target contract name has the same name as " +
+						"the .sol or .json file.\n You can set a non-default contract name " +
+						"manually with the -c flag.\n
 			}
 			fatalf(errStr)
 		}
 		if len(compilerOutputs) > 1 {
 			fatalf(
-				"I got unexpected output from solc that I do not know how to handle.\n"+
-					"The solc output contained %v results for the %v contract in %v, and I do not know which one to choose.\n",
-				len(compilerOutputs), contractName, inputFile,
+				"I got unexpected output from solc that I do not know how to handle.\n" +
+					"The solc output contained %v results for the %v contract in %v, and I do " +
+					"not know which one to choose.\n",
+				len(compilerOutputs), 
+				contractName, 
+				inputFile,
 			)
 		}
 		compilerOutput = compilerOutputs[0]
