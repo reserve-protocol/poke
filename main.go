@@ -9,12 +9,11 @@ import (
 	"math/big"
 	"os"
 	"os/exec"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
 	"text/template"
-
-	"path"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -468,18 +467,18 @@ func parseJsonBytecode(compiled []byte, contractName string, inputFile string, d
 			if defaultContractName {
 				errStr = errStr +
 					"By default, I assume that the target contract name has the same name as " +
-						"the .sol or .json file.\n You can set a non-default contract name " +
-						"manually with the -c flag.\n
+					"the .sol or .json file.\n You can set a non-default contract name " +
+					"manually with the -c flag.\n"
 			}
 			fatalf(errStr)
 		}
 		if len(compilerOutputs) > 1 {
 			fatalf(
-				"I got unexpected output from solc that I do not know how to handle.\n" +
-					"The solc output contained %v results for the %v contract in %v, and I do " +
+				"I got unexpected output from solc that I do not know how to handle.\n"+
+					"The solc output contained %v results for the %v contract in %v, and I do "+
 					"not know which one to choose.\n",
-				len(compilerOutputs), 
-				contractName, 
+				len(compilerOutputs),
+				contractName,
 				inputFile,
 			)
 		}
