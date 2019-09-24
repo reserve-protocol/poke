@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -16,9 +14,10 @@ import (
 	"strings"
 	"text/template"
 
+	"path"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/jeremyschlatter/xdg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -31,16 +30,16 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
 }
 
+// cacheObject: the output of a compilation unit.
+// Given that we're not really using a cache, this is increasingly badly named.
 type cacheObject struct {
 	ABI      string
 	DevDoc   DevDoc
 	UserDoc  UserDoc
 	Name     string
 	Bytecode []byte
-	Hash     []byte
 }
 
 var solTypes = map[string]struct {
@@ -125,25 +124,25 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
 
-func mainErr() error {
-	if len(os.Args) == 2 && (os.Args[1] == "-license" || os.Args[1] == "--license") {
-		var (
-			orderedLicenses []license
-			seenLicenses    = make(map[string]bool)
-		)
-		for _, info := range dependencyLicenses {
-			if !seenLicenses[info.License[0]] {
-				seenLicenses[info.License[0]] = true
-				orderedLicenses = append(orderedLicenses, info.License)
-			}
+// printLicenses returns this code's license message as an error.
+func printLicenses() error {
+	var (
+		orderedLicenses []license
+		seenLicenses    = make(map[string]bool)
+	)
+	for _, info := range dependencyLicenses {
+		if !seenLicenses[info.License[0]] {
+			seenLicenses[info.License[0]] = true
+			orderedLicenses = append(orderedLicenses, info.License)
 		}
-		return template.Must(template.New("").Funcs(
-			map[string]interface{}{
-				"tab": func(s string) string {
-					return strings.ReplaceAll(s, "\n", "\n\t")
-				},
+	}
+	return template.Must(template.New("").Funcs(
+		map[string]interface{}{
+			"tab": func(s string) string {
+				return strings.ReplaceAll(s, "\n", "\n\t")
 			},
-		).Parse(`
+		},
+	).Parse(`
 Poke incorporates a number of open-source libraries, licensed under the following terms:
 
 {{range .Deps}}
@@ -163,14 +162,20 @@ The text of these licenses is as follows:
 {{index . 1}}
 {{end}}
 		`)).Execute(
-			os.Stdout,
-			map[string]interface{}{
-				"Deps":     dependencyLicenses,
-				"Licenses": orderedLicenses,
-			},
-		)
+		os.Stdout,
+		map[string]interface{}{
+			"Deps":     dependencyLicenses,
+			"Licenses": orderedLicenses,
+		},
+	)
+}
+func mainErr() error {
+	// Special-case printing out licenses
+	if len(os.Args) == 2 && (os.Args[1] == "-license" || os.Args[1] == "--license") {
+		return printLicenses()
 	}
 
+	// Parse flags
 	contractName := pflag.StringP(
 		"contract",
 		"c",
@@ -218,79 +223,39 @@ The text of these licenses is as follows:
 
 To see the licenses of libraries included in poke, run 'poke -license'`)
 	}
-	solFile := pflag.Arg(0)
+
+	inputFile := pflag.Arg(0)
 	args := pflag.Args()[1:]
+	defaultContractName := false
 
-	workDir, err := ioutil.TempDir("", "poke-work-dir")
-	if err != nil {
-		return xerrors.Errorf("creating temporary working directory: %w", err)
-	}
-	defer os.RemoveAll(workDir)
+	var bytes []byte
 
-	// TODO: support sol-compiler
-	cfg := xdg.Paths{
-		XDGSuffix: "poke",
-	}
-	build, err := func() (*cacheObject, error) {
-		// hash the input
-		hash := sha256.New()
-		b, err := ioutil.ReadFile(solFile)
-		if err != nil {
-			return nil, xerrors.Errorf("reading %v: %w", solFile, err)
-		}
-		hash.Write(b)
-		buildHash := hash.Sum(nil)
-		fname := fmt.Sprintf("%v-%v.gob", solFile, *contractName)
-		cache, err := cfg.CacheFile(fname)
-
-		if false && err == nil {
-			// check if hash matches cache
-			// TODO: More robust cache invalidation.
-			//       In particular, notice when dependencies have changed
-			//       even when the top-level contract file hasn't changed.
-			//       One way to do this is to parse the import statements
-			//       in the .sol files ourselves. Imports that we can successfully
-			//       resolve get hashed. Imports that we cannot successfully resolve
-			//       automatically invalidate the cache.
-			b, err = ioutil.ReadFile(cache)
-			if err != nil {
-				return nil, xerrors.Errorf("reading cached build output: %w", err)
-			}
-			// if so, use cache
-			var build cacheObject
-			err = gob.NewDecoder(bytes.NewBuffer(b)).Decode(&build)
-			if err != nil {
-				return nil, xerrors.Errorf("decoding cached build output: %w", err)
-			}
-			if bytes.Equal(buildHash, build.Hash) {
-				return &build, nil
-			}
-		}
-		// else do work and save cache
-		build, err := abigen(solFile, *contractName, workDir)
-		if err != nil {
-			return nil, xerrors.Errorf("generating Go bindings to solidity ABI: %w", err)
-		}
-		build.Hash = buildHash
-		fname, err = cfg.EnsureCacheFile(fname)
-		if err != nil {
-			return nil, xerrors.Errorf("creating cache file: %w", err)
-		}
-		buf := new(bytes.Buffer)
-		err = gob.NewEncoder(buf).Encode(build)
-		if err != nil {
-			return nil, xerrors.Errorf("serializing build output to cache: %w", err)
-		}
-		err = ioutil.WriteFile(fname, buf.Bytes(), 0644)
-		if err != nil {
-			return nil, xerrors.Errorf("writing build output to cache: %w", err)
-		}
-		return build, nil
-	}()
-	if err != nil {
-		return err
+	// Set contract name from filename, if needed
+	if *contractName == "" {
+		defaultContractName = true
+		*contractName = trimExtension(path.Base(inputFile))
 	}
 
+	// Build or fetch EVM bytecode as needed
+	if strings.HasSuffix(inputFile, ".sol") {
+		var err error
+		bytes, err = abigen(inputFile, *contractName)
+		if err != nil {
+			return xerrors.Errorf("generating Go bindings to solidity ABI: %w", err)
+		}
+	} else if strings.HasSuffix(inputFile, ".json") {
+		var err error
+		bytes, err = openCombinedJson(inputFile, *contractName)
+		if err != nil {
+			return xerrors.Errorf("poke: %w", err)
+		}
+	} else {
+		return xerrors.Errorf("\"%s\" expected to end with either \".sol\" or \".json\"", inputFile)
+	}
+
+	build, err := parseJsonBytecode(bytes, *contractName, inputFile, defaultContractName)
+
+	// Get and parse ABI
 	theABI, err := abi.JSON(strings.NewReader(build.ABI))
 	if err != nil {
 		return xerrors.Errorf("parsing ABI: %w", err)
@@ -437,7 +402,17 @@ type UserDoc struct {
 	Methods map[string]notice
 }
 
-func abigen(solFile, contractName string, workDir string) (*cacheObject, error) {
+// readCombinedJson reads compiled bytecode from an already-existing jsonFile.
+func openCombinedJson(jsonFile, contractName string) ([]byte, error) {
+	compiled, err := ioutil.ReadFile(jsonFile)
+	if err != nil {
+		return nil, xerrors.Errorf("reading bytecode: %w", err)
+	}
+	return compiled, nil
+}
+
+// abigen compiles the given Solidity file in workDir and returns the compiled bytecode.
+func abigen(solFile, contractName string) ([]byte, error) {
 	cmd := exec.Command(
 		"solc",
 		"--optimize",
@@ -450,6 +425,18 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 	if err != nil {
 		return nil, xerrors.Errorf("solc: %w", err)
 	}
+	return compiled, nil
+}
+
+// Return the filename with its filename extension trimmed away.
+func trimExtension(filename string) string {
+	return strings.TrimSuffix(filename, path.Ext(filename))
+}
+
+// parseJsonBytecode takes compiled bytes, as the bytestream output by `solc --combined-json abi,bin,userdoc,devdoc`
+// and formats it as a cacheObject.
+// contractName: the name of the contract to grab the cached object from
+func parseJsonBytecode(compiled []byte, contractName string, inputFile string, defaultContractName bool) (*cacheObject, error) {
 	type CompilerOutput struct {
 		ABI     string
 		Bin     string
@@ -459,49 +446,37 @@ func abigen(solFile, contractName string, workDir string) (*cacheObject, error) 
 	var parsed struct {
 		Contracts map[string]CompilerOutput
 	}
-	err = json.NewDecoder(bytes.NewBuffer(compiled)).Decode(&parsed)
+	err := json.NewDecoder(bytes.NewBuffer(compiled)).Decode(&parsed)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to decode solc output: %w", err)
 	}
-
-	err = os.Chdir(workDir)
-	if err != nil {
-		return nil, xerrors.Errorf("changing to temporary working directory: %w", err)
-	}
+	inputFile = path.Base(inputFile)
 
 	// choose which contract we care about
 	var compilerOutput CompilerOutput
 	{
-		matchName := contractName
-		if contractName == "" {
-			parts := strings.Split(solFile, "/")
-			matchName = strings.TrimSuffix(parts[len(parts)-1], ".sol")
-		}
 		var compilerOutputs []CompilerOutput
+
 		for fileColonContractName := range parsed.Contracts {
 			nameParts := strings.Split(fileColonContractName, ":")
-			if nameParts[0] == solFile && nameParts[1] == matchName {
+			if trimExtension(path.Base(nameParts[0])) == trimExtension(inputFile) && nameParts[1] == contractName {
 				compilerOutputs = append(compilerOutputs, parsed.Contracts[fileColonContractName])
 			}
 		}
 		if len(compilerOutputs) == 0 {
-			if contractName == "" {
-				fatalf(
-					"No contract named %q in %v.\n"+
-						"By default I expect to find a contract with the same name as the .sol file.\n"+
-						"You can set a non-default contract name manually with the -c flag.",
-					matchName, solFile,
-				)
+			errStr := fmt.Sprintf("I found no contract named %q\n", contractName)
+			if defaultContractName {
+				errStr = errStr +
+					"By default, I assume that the target contract name has the same name as the .sol or .json file.\n" +
+					"You can set a non-default contract name manually with the -c flag.\n"
 			}
-			fatalf(
-				"I did not find a contract named %q in %v",
-				contractName, solFile,
-			)
+			fatalf(errStr)
 		}
 		if len(compilerOutputs) > 1 {
 			fatalf(
-				"I'm sorry, I got unexpected output from solc that I do not know how to handle. The solc output contained %v results for the %v contract in %v, and I do not know which one to choose.",
-				len(compilerOutputs), matchName, solFile,
+				"I got unexpected output from solc that I do not know how to handle.\n"+
+					"The solc output contained %v results for the %v contract in %v, and I do not know which one to choose.\n",
+				len(compilerOutputs), contractName, inputFile,
 			)
 		}
 		compilerOutput = compilerOutputs[0]

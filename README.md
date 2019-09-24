@@ -17,6 +17,7 @@ It may be useful to have [`solc-select`](https://github.com/crytic/solc-select) 
 
 # Examples
 
+## Directly from Solidity file
 Usually you can just run `poke token.sol`, but things can also get complicated. Here's an example:
 
     SOLC_VERSION=0.4.24 poke ReserveRights.sol -c ReserveRightsToken \
@@ -32,3 +33,14 @@ What's happening here:
 - We use the -F flag to specify to use the hardware key that is plugged in via USB
 - We use the -n flag to direct it to mainnet
 - We use the --address flag to specify the token address the ReserveRightsToken is deployed at
+
+## 
+If you've already run `solc` with the flag `--combined-json abi,bin,userdoc,devdoc,...`, then instead of naming a Solidity file on the command line, you can instead provide solc's output combined JSON file. For instance, the same example from before would be:
+
+    poke ReserveRights.json -c ReserveRightsToken \
+    transfer 0x91c987bf62D25945dB517BDAa840A6c661374402 100 \
+    -F hardware \
+    -n https://mainnet.infura.io/v3/d884cdc2e05b4f0897f6dffd0bdc1821 \
+    --address 0x8762db106b2c2a0bccb3a80d1ed41273552616e8
+
+This may integrate better with workflow build tools like `make`.
