@@ -13,7 +13,7 @@ To install poke from source, you'll need [Go 1.12+](https://golang.org/dl/), wit
     cd poke
     go install
 
-It may be useful to have [`solc-select`](https://github.com/crytic/solc-select) when you finally decide to run `poke`. You don't need it, but if you're working with a smart contract with an old version you may find it useful. Whether you decide to install `solc-select` or not, you will definitely need `solc` one way or another. 
+It may be useful to have [`solc-select`](https://github.com/crytic/solc-select) when you finally decide to run `poke` if you will be using it directly on `.sol` files. Optionally, you can use `poke` directly on `.json`s, though presumably you will have created those with a compiler like `solc` or `solc-select` in the first place as well.  
 
 # Examples
 
@@ -34,7 +34,7 @@ What's happening here:
 - We use the -n flag to direct it to mainnet
 - We use the --address flag to specify the token address the ReserveRightsToken is deployed at
 
-## 
+## Directly on compiler output
 If you've already run `solc` with the flag `--combined-json abi,bin,userdoc,devdoc,...`, then instead of naming a Solidity file on the command line, you can instead provide solc's output combined JSON file. For instance, the same example from before would be:
 
     poke ReserveRights.json -c ReserveRightsToken \
