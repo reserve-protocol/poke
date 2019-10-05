@@ -326,10 +326,11 @@ func parseUint256(s string) *big.Int {
 		assert(index+1 < len(s), "integers must follow `e` in scientific notation")
 		exp, err = strconv.Atoi(s[index+1:])
 		check(err, "scientific notation exponent must be a natural number")
+		s = s[:index]
 	}
 
-	base, err := decimal.NewFromString(s[:index])
-	check(err, fmt.Sprintf("Expected a decimal number, but got %q instead.\n", s[:index]))
+	base, err := decimal.NewFromString(s)
+	check(err, fmt.Sprintf("Expected a decimal number, but got %q instead.\n", s))
 	return truncateDecimal(base.Shift(int32(exp)))
 }
 
