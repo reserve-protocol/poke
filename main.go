@@ -489,12 +489,12 @@ func parseJsonBytecode(compiled []byte, contractName string, inputFile string, d
 
 		for fileColonContractName := range parsed.Contracts {
 			nameParts := strings.Split(fileColonContractName, ":")
-			if trimExtension(path.Base(nameParts[0])) == trimExtension(inputFile) && nameParts[1] == contractName {
+			if trimExtension(nameParts[1]) == contractName {
 				compilerOutputs = append(compilerOutputs, parsed.Contracts[fileColonContractName])
 			}
 		}
 		if len(compilerOutputs) == 0 {
-			errStr := fmt.Sprintf("I found no contract named %q\n", contractName)
+			errStr := fmt.Sprintf("I found no contract named %q\n  %v", contractName, parsed.Contracts)
 			if defaultContractName {
 				errStr = errStr +
 					"By default, I assume that the target contract name has the same name as " +
