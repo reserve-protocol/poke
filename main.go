@@ -369,8 +369,8 @@ To see the licenses of libraries included in poke, run 'poke -license'`)
 		root.AddCommand(cmd)
 	}
 	utilities := []*cobra.Command{
-		showEthCmd,
-		sendEthCmd,
+		showWeiCmd,
+		sendWeiCmd,
 		addressCmd,
 		showGasCmd,
 		deployCmd(name, theABI, bytecode),

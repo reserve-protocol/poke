@@ -519,22 +519,22 @@ var showGasCmd = &cobra.Command{
 	},
 }
 
-var showEthCmd = &cobra.Command{
-	Use:   "show-eth <address>",
-	Short: "Show ETH balance.",
+var showWeiCmd = &cobra.Command{
+	Use:   "show-wei <address>",
+	Short: "Show WEI balance.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		address := parseAddress(args[0])
 		wei, err := getNode().BalanceAt(ctx, address, nil)
 		check(err, "retrieving wei balance")
-		fmt.Printf("%v atto-ETH\n", wei)
+		fmt.Printf("%v wei\n", wei)
 	},
 }
 
-var sendEthCmd = &cobra.Command{
-	Use:   "send-eth <address> <value>",
-	Short: "Send ETH to an address.",
+var sendWeiCmd = &cobra.Command{
+	Use:   "send-wei <address> <value>",
+	Short: "Send WEI (1e18 WEI = 1 ETH) to an address.",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
@@ -556,7 +556,7 @@ var sendEthCmd = &cobra.Command{
 		)
 		check(err, "signing transaction")
 		check(getNode().SendTransaction(ctx, tx), "sending transaction")
-		fmt.Printf("Sent %v atto-ETH to %v.\n", attoTokens, address.Hex())
+		fmt.Printf("Sent %v WEI to %v.\n", attoTokens, address.Hex())
 	},
 }
 
