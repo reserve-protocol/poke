@@ -333,15 +333,30 @@ func parseUint256(s string) *big.Int {
 	return truncateDecimal(base.Shift(int32(exp)))
 }
 
-// parseToAttoArray parses an array of Uint256's according to `parseUint256`.
+// parseUint256Array parses an array of Uint256's according to `parseUint256`.
 // All arrays are assumed to start with "[" and end with "]", and are comma-separated.
-func parseToUint256Array(s string) []*big.Int {
+func parseUint256Array(s string) []*big.Int {
 	parts := parseArray(s)
 	asBigs := make([]*big.Int, len(parts))
 	for i, part := range parts {
 		asBigs[i] = parseUint256(part)
 	}
 	return asBigs
+}
+
+func parseBool(s string) bool {
+	b, err := strconv.ParseBool(s)
+	check(err, fmt.Sprintf("failed to parse %q as bool due to %v", s, err))
+	return b
+}
+
+func parseBoolArray(s string) []bool {
+	parts := parseArray(s)
+	asBools := make([]bool, len(parts))
+	for i, part := range parts {
+		asBools[i] = parseBool(part)
+	}
+	return asBools
 }
 
 // truncateDecimal truncates d to an integer and returns it as a *big.Int.
@@ -374,6 +389,14 @@ func displayAddressArray(arr *[]common.Address) string {
 	strArr := make([]string, len(*arr))
 	for i, a := range *arr {
 		strArr[i] = a.Hex()
+	}
+	return "[" + strings.Join(strArr, ", ") + "]"
+}
+
+func displayBoolArray(arr *[]bool) string {
+	strArr := make([]string, len(*arr))
+	for i, a := range *arr {
+		strArr[i] = strconv.FormatBool(a)
 	}
 	return "[" + strings.Join(strArr, ", ") + "]"
 }

@@ -81,7 +81,7 @@ var solTypes = map[string]struct {
 	},
 	"uint256[]": {
 		parser: func(s string) interface{} {
-			return parseToUint256Array(s)
+			return parseUint256Array(s)
 		},
 		toString: func(i interface{}) string {
 			return displayBigIntArray(i.(*[]*big.Int))
@@ -92,17 +92,24 @@ var solTypes = map[string]struct {
 	},
 	"bool": {
 		parser: func(s string) interface{} {
-			b, err := strconv.ParseBool(s)
-			if err != nil {
-				fatalf("failed to parse %q as bool due to %v", s, err)
-			}
-			return b
+			return parseBool(s)
 		},
 		toString: func(i interface{}) string {
 			return strconv.FormatBool(*i.(*bool))
 		},
 		goType: func() interface{} {
 			return new(bool)
+		},
+	},
+	"bool[]": {
+		parser: func(s string) interface{} {
+			return parseBoolArray(s)
+		},
+		toString: func(i interface{}) string {
+			return displayBoolArray(i.(*[]bool))
+		},
+		goType: func() interface{} {
+			return &[]bool{}
 		},
 	},
 	"string": {
