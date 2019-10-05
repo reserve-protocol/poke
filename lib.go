@@ -425,6 +425,7 @@ func log(name string, tx *types.Transaction, abi abi.ABI, err error) {
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		fatal("transaction reverted")
 	}
+	fmt.Printf("Gas Used: %v\n", receipt.GasUsed)
 	deployment := getDeployment(abi)
 	if len(receipt.Logs) > 0 {
 		fmt.Println("Done. Events:")
