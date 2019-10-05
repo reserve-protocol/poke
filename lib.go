@@ -305,18 +305,43 @@ func parseAddress(s string) common.Address {
 	return hexToAddress(s)
 }
 
-// parseToAtto reads a decimal-formatted number of tokens and returns that number times 1e18.
-func parseToAtto(s string) *big.Int {
-	decimals := int32(18)
-	if strings.HasPrefix(s, "int:") {
-		s = strings.TrimPrefix(s, "int:")
-		decimals = 0
+// parseAddressArray parses an array of hex addresses into common.Address's.
+// All arrays are assumed to start with "[" and end with "]", and are comma-separated.
+func parseAddressArray(s string) []common.Address {
+	parts := parseArray(s)
+	asAddresses := make([]common.Address, len(parts))
+	for i, part := range parts {
+		asAddresses[i] = parseAddress(part)
 	}
-	d, err := decimal.NewFromString(s)
-	if err != nil {
-		fatalf("Expected a decimal number, but got %q instead.\n", s)
+	return asAddresses
+}
+
+// parseUint256 parses an atto number of tokens, parsing scientific notation if necessary.
+// For example, ".33e4" -> 3300. However, "3300" is perfectly acceptable as well.
+func parseUint256(s string) *big.Int {
+	exp := 0
+	var err error
+	index := strings.Index(s, "e")
+	if index != -1 {
+		assert(index+1 < len(s), "integers must follow `e` in scientific notation")
+		exp, err = strconv.Atoi(s[index+1:])
+		check(err, "scientific notation exponent must be a natural number")
 	}
-	return truncateDecimal(d.Shift(decimals))
+
+	base, err := decimal.NewFromString(s[:index])
+	check(err, fmt.Sprintf("Expected a decimal number, but got %q instead.\n", s[:index]))
+	return truncateDecimal(base.Shift(int32(exp)))
+}
+
+// parseToAttoArray parses an array of Uint256's according to `parseUint256`.
+// All arrays are assumed to start with "[" and end with "]", and are comma-separated.
+func parseToUint256Array(s string) []*big.Int {
+	parts := parseArray(s)
+	asBigs := make([]*big.Int, len(parts))
+	for i, part := range parts {
+		asBigs[i] = parseUint256(part)
+	}
+	return asBigs
 }
 
 // truncateDecimal truncates d to an integer and returns it as a *big.Int.
@@ -332,9 +357,25 @@ func truncateDecimal(d decimal.Decimal) *big.Int {
 	return coeff.Div(coeff, z.Exp(big.NewInt(10), big.NewInt(int64(-exp)), nil))
 }
 
-// toDisplay does not modify the atto amount, yielding a display in atto
-func toDisplay(i *big.Int) string {
+// displayBigInt does not modify the atto amount, yielding a display in atto
+func displayBigInt(i *big.Int) string {
 	return decimal.NewFromBigInt(i, 0).String()
+}
+
+func displayBigIntArray(arr *[]*big.Int) string {
+	strArr := make([]string, len(*arr))
+	for i, a := range *arr {
+		strArr[i] = displayBigInt(a)
+	}
+	return "[" + strings.Join(strArr, ", ") + "]"
+}
+
+func displayAddressArray(arr *[]common.Address) string {
+	strArr := make([]string, len(*arr))
+	for i, a := range *arr {
+		strArr[i] = a.Hex()
+	}
+	return "[" + strings.Join(strArr, ", ") + "]"
 }
 
 func toAddress(key *ecdsa.PrivateKey) common.Address {
@@ -343,6 +384,14 @@ func toAddress(key *ecdsa.PrivateKey) common.Address {
 
 func keyToHex(key *ecdsa.PrivateKey) string {
 	return hex.EncodeToString(crypto.FromECDSA(key))
+}
+
+func parseArray(s string) []string {
+	s = strings.ReplaceAll(s, "[", "")
+	s = strings.ReplaceAll(s, "]", "")
+	s = strings.ReplaceAll(s, " ", "")
+	parts := strings.Split(s, ",")
+	return parts
 }
 
 // log logs the result of a mutator txn to stdout, including that txn's events.
@@ -467,7 +516,7 @@ var sendEthCmd = &cobra.Command{
 		nonce, err := getNode().PendingNonceAt(ctx, getAddress())
 		check(err, "retrieving nonce")
 		address := parseAddress(args[0])
-		attoTokens := parseToAtto(args[1])
+		attoTokens := parseUint256(args[1])
 		tx, err := getTxnOpts().Signer(
 			types.NewEIP155Signer(getNetID()),
 			getAddress(),
@@ -499,6 +548,12 @@ var codeAtCmd = &cobra.Command{
 		check(err, "retrieving code")
 		fmt.Println(hex.EncodeToString(code))
 	},
+}
+
+func assert(val bool, msg string) {
+	if !val {
+		fatal(msg + ":")
+	}
 }
 
 func check(err error, msg string) {

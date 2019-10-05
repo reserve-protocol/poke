@@ -57,15 +57,37 @@ var solTypes = map[string]struct {
 			return &common.Address{}
 		},
 	},
-	"uint256": {
+	"address[]": {
 		parser: func(s string) interface{} {
-			return parseToAtto(s)
+			return parseAddressArray(s)
 		},
 		toString: func(i interface{}) string {
-			return toDisplay(*(i.(**big.Int)))
+			return displayAddressArray(i.(*[]common.Address))
+		},
+		goType: func() interface{} {
+			return &[]common.Address{}
+		},
+	},
+	"uint256": {
+		parser: func(s string) interface{} {
+			return parseUint256(s)
+		},
+		toString: func(i interface{}) string {
+			return displayBigInt(*(i.(**big.Int)))
 		},
 		goType: func() interface{} {
 			return new(*big.Int)
+		},
+	},
+	"uint256[]": {
+		parser: func(s string) interface{} {
+			return parseToUint256Array(s)
+		},
+		toString: func(i interface{}) string {
+			return displayBigIntArray(i.(*[]*big.Int))
+		},
+		goType: func() interface{} {
+			return &[]*big.Int{}
 		},
 	},
 	"bool": {
