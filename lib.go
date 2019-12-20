@@ -375,7 +375,25 @@ func truncateDecimal(d decimal.Decimal) *big.Int {
 
 // displayBigInt does not modify the atto amount, yielding a display in atto
 func displayBigInt(i *big.Int) string {
-	return decimal.NewFromBigInt(i, 0).String()
+	i_str := decimal.NewFromBigInt(i, 0).String()
+	if i_str == "0" {
+		return i_str
+	}
+
+	index := len(i_str) - 1
+	for ; index >= 0; index-- {
+		if i_str[index] != '0' {
+			break
+		}
+	}
+
+	sci := i_str[0 : index+1]
+	zeros := len(i_str) - 1 - index
+	if zeros > 0 {
+		sci += "e" + strconv.Itoa(zeros)
+	}
+
+	return sci
 }
 
 func displayBigIntArray(arr *[]*big.Int) string {
