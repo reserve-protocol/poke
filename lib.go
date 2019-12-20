@@ -331,10 +331,12 @@ func parseUint256(s string) *big.Int {
 	}
 
 	rev := reverse(s)
-	period := 4
-	for _, val := range rev {
-		period = (period - 1) % 4
-		assert(period != 0 || val == ',', "long inputs must contain commas every three digits")
+	for i, val := range rev {
+		if i%4 == 3 {
+			assert(val == ',', "long inputs must contain commas exactly every three digits")
+		} else {
+			assert(val != ',', "long inputs must contain commas exactly every three digits")
+		}
 	}
 
 	base, err := decimal.NewFromString(strings.ReplaceAll(s, ",", ""))
