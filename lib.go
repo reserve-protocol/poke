@@ -318,6 +318,7 @@ func parseAddressArray(s string) []common.Address {
 
 // parseUint256 parses an atto number of tokens, parsing scientific notation if necessary.
 // For example, ".33e4" -> 3300. However, "3300" is perfectly acceptable as well.
+// It also requires that long numbers use commas.
 func parseUint256(s string) *big.Int {
 	exp := 0
 	var err error
@@ -329,7 +330,14 @@ func parseUint256(s string) *big.Int {
 		s = s[:index]
 	}
 
-	base, err := decimal.NewFromString(s)
+	rev := reverse(s)
+	period := 4
+	for _, val := range rev {
+		period = (period - 1) % 4
+		assert(period != 0 || val == ',', "long inputs must contain commas every three digits")
+	}
+
+	base, err := decimal.NewFromString(strings.ReplaceAll(s, ",", ""))
 	check(err, fmt.Sprintf("Expected a decimal number, but got %q instead.\n", s))
 	return truncateDecimal(base.Shift(int32(exp)))
 }
@@ -373,7 +381,8 @@ func truncateDecimal(d decimal.Decimal) *big.Int {
 	return coeff.Div(coeff, z.Exp(big.NewInt(10), big.NewInt(int64(-exp)), nil))
 }
 
-// displayBigInt does not modify the atto amount, yielding a display in atto
+// displayBigInt does not modify the atto amount, yielding a display in atto.
+// It outputs in scientific notation when possible.
 func displayBigInt(i *big.Int) string {
 	i_str := decimal.NewFromBigInt(i, 0).String()
 	if i_str == "0" {
@@ -603,4 +612,14 @@ func check(err error, msg string) {
 	if err != nil {
 		fatal(msg+":", err)
 	}
+}
+
+func reverse(orig string) string {
+	var c []string = strings.Split(orig, "")
+
+	for i, j := 0, len(c)-1; i < j; i, j = i+1, j-1 {
+		c[i], c[j] = c[j], c[i]
+	}
+
+	return strings.Join(c, "")
 }
