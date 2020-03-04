@@ -317,8 +317,8 @@ func parseAddressArray(s string) []common.Address {
 }
 
 // parseUint256 parses an atto number of tokens, parsing scientific notation if necessary.
-// For example, ".33e4" -> 3300. However, "3300" is perfectly acceptable as well.
-// It also requires that long numbers use commas.
+// For example, ".33e4" -> 3300. However, "3,300" is perfectly acceptable as well.
+// Note that it requires that long numbers use commas.
 func parseUint256(s string) *big.Int {
 	exp := 0
 	var err error
@@ -330,7 +330,7 @@ func parseUint256(s string) *big.Int {
 		s = s[:index]
 	}
 
-	rev := reverse(s)
+	rev := reverse(strings.ReplaceAll(s, ".", ""))
 	for i, val := range rev {
 		if i%4 == 3 {
 			assert(val == ',', "long inputs must contain commas exactly every three digits")
@@ -442,8 +442,7 @@ func keyToHex(key *ecdsa.PrivateKey) string {
 func parseArray(s string) []string {
 	s = strings.ReplaceAll(s, "[", "")
 	s = strings.ReplaceAll(s, "]", "")
-	s = strings.ReplaceAll(s, " ", "")
-	parts := strings.Split(s, ",")
+	parts := strings.Split(s, " ")
 	return parts
 }
 
