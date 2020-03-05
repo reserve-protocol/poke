@@ -330,16 +330,16 @@ func parseUint256(s string) *big.Int {
 		s = s[:index]
 	}
 
-	rev := reverse(s)
-	for i, val := range rev {
-		if i%4 == 3 {
-			assert(val == ',', "long inputs must contain commas exactly every three digits")
-		} else {
-			assert(val != ',', "long inputs must contain commas exactly every three digits")
-		}
+	index = strings.Index(s, ".")
+	if index != -1 {
+		assert(index+1 < len(s), "no hanging decimals points")
+		assertUnderscoreSeparated(s[0:index])
+		assertUnderscoreSeparated(reverse(s[index+1:])) // .123_4 not .1_234
+	} else {
+		assertUnderscoreSeparated(s)
 	}
 
-	base, err := decimal.NewFromString(strings.ReplaceAll(s, ",", ""))
+	base, err := decimal.NewFromString(strings.ReplaceAll(s, "_", ""))
 	check(err, fmt.Sprintf("Expected a decimal number, but got %q instead.\n", s))
 	return truncateDecimal(base.Shift(int32(exp)))
 }
@@ -613,6 +613,17 @@ func assert(val bool, msg string) {
 func check(err error, msg string) {
 	if err != nil {
 		fatal(msg+":", err)
+	}
+}
+
+func assertUnderscoreSeparated(s string) {
+	rev := reverse(s)
+	for i, val := range rev {
+		if i%4 == 3 {
+			assert(val == '_', "long inputs must contain underscores exactly every three digits, both on the left and right of the decimal")
+		} else {
+			assert(val != '_', "long inputs must contain underscores exactly every three digits, both on the left and right of the decimal")
+		}
 	}
 }
 
