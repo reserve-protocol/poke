@@ -44,3 +44,7 @@ If you've already run `solc` with the flag `--combined-json abi,bin,userdoc,devd
     --address 0x8762db106b2c2a0bccb3a80d1ed41273552616e8
 
 This may integrate better with workflow build tools like `make`.
+
+# Troubleshooting
+
+If when using a hardware wallet you encounter it skipping over the "Waiting for you to confirm..." step, it's likely because you don't have contract data enabled on your hardware wallet. 
