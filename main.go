@@ -152,7 +152,7 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
 
-// printLicenses returns this code's license message as an error.
+// printLicenses prints this code's license message to stdout.
 func printLicenses() error {
 	var (
 		orderedLicenses []license
@@ -197,6 +197,7 @@ The text of these licenses is as follows:
 		},
 	)
 }
+
 func mainErr() error {
 	// Special-case printing out licenses
 	if len(os.Args) == 2 && (os.Args[1] == "-license" || os.Args[1] == "--license") {
