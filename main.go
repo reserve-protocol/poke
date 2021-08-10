@@ -446,6 +446,7 @@ func abigen(solFile, contractName string) ([]byte, error) {
 	cmd := exec.Command(
 		"solc",
 		"--optimize",
+		"--allow-paths", "*,",
 		"--optimize-runs", getOptimizeRuns(), // performance tradeoff here
 		"--combined-json", "abi,bin,userdoc,devdoc",
 		solFile,
@@ -478,6 +479,8 @@ func parseJsonBytecode(compiled []byte, contractName string, inputFile string, d
 	}
 	err := json.NewDecoder(bytes.NewBuffer(compiled)).Decode(&parsed)
 	if err != nil {
+		fmt.Printf("error %v", err)
+
 		return nil, xerrors.Errorf("failed to decode solc output: %w", err)
 	}
 	inputFile = path.Base(inputFile)
